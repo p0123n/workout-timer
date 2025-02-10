@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Workout Timer</title>
+  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
+  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
+  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
+  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+</head>
+<body class="bg-gray-100">
+  <div id="root"></div>
+  <script type="text/babel">
+    const { useState, useEffect, useRef } = React;
+    const presets = {
+      classic: { workTime: 20, exerciseRest: 10, roundRest: 0, rounds: 8, exercises: 1 },
+      strength: { workTime: 45, exerciseRest: 15, roundRest: 30, rounds: 4, exercises: 4 },
+      endurance: { workTime: 30, exerciseRest: 15, roundRest: 30, rounds: 4, exercises: 2 }
+    };
+    function TabataTimer() {
+      const [mode, setMode] = useState("settings");
+      const [workTime, setWorkTime] = useState(45);
+      const [exerciseRest, setExerciseRest] = useState(15);
+      const [roundRest, setRoundRest] = useState(30);
+      const [rounds, setRounds] = useState(4);
+      const [exercises, setExercises] = useState(4);
+      const [schedule, setSchedule] = useState([]);
+      const [totalDuration, setTotalDuration] = useState(0);
+      const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
+      const [currentSegmentRemaining, setCurrentSegmentRemaining] = useState(0);
+      const [elapsedTime, setElapsedTime] = useState(0);
+      const [isRunning, setIsRunning] = useState(false);
+      const [countdown, setCountdown] = useState(3);
+      const audioContextRef = useRef(null);
+      const intervalRef = useRef(null);
+      const initAudio = () => {
+        if (!audioContextRef.current) {
+          audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
+        }
+      };
+      const beep = (frequency, duration) => {
+        if (!audioContextRef.current) return;
+        const oscillator = audioContextRef.current.createOscillator();
+        const gain = audioContextRef.current.createGain();
+        oscillator.connect(gain);
+        gain.connect(audioContextRef.current.destination);
+        oscillator.frequency.value = frequency;
+        oscillator.type = "sine";
+        gain.gain.value = 0.1;
+        oscillator.start();
+        oscillator.stop(audioContextRef.current.currentTime + duration);
+      };
+      const tripleBeep = () => {
+        beep(440, 0.1);
+        setTimeout(() => beep(440, 0.1), 200);
+        setTimeout(() => beep(440, 0.1), 400);
+      };
+      const calculateTotalTime = () => {
+        const totalWorkTime = workTime * exercises * rounds;
+        const totalExerciseRest = exerciseRest * (exercises - 1) * rounds;
+        const totalRoundRest = roundRest * (rounds - 1);
+        return totalWorkTime + totalExerciseRest + totalRoundRest;
+      };
+      const buildSchedule = () => {
+        let segments = [];
+        for (let i = 1; i <= rounds; i++) {
+          for (let j = 1; j <= exercises; j++) {
+            segments.push({ phase: "Work", round: i, exercise: j, duration: workTime });
+            if (j < exercises) {
+              segments.push({ phase: "Rest", round: i, exercise: j, duration: exerciseRest });
+            }
+          }
+          if (i < rounds) {
+            segments.push({ phase: "Round Rest", round: i, exercise: null, duration: roundRest });
+          }
+        }
+        return segments;
+      };
+      const startWorkout = () => {
+        initAudio();
+        setMode("countdown");
+        setCountdown(3);
+      };
+      const handleInput = (setter) => (e) => {
+        const value = Math.max(1, parseInt(e.target.value) || 0);
+        setter(value);
+      };
+      const applyPreset = (preset) => {
+        const settings = presets[preset];
+        setWorkTime(settings.workTime);
+        setExerciseRest(settings.exerciseRest);
+        setRoundRest(settings.roundRest);
+        setRounds(settings.rounds);
+        setExercises(settings.exercises);
+      };
+      useEffect(() => {
+        if (mode === "countdown" && countdown > 0) {
+          beep(660, 0.1);
+          const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
+          return () => clearTimeout(timer);
+        }
+        if (mode === "countdown" && countdown === 0) {
+          const sch = buildSchedule();
+          setSchedule(sch);
+          setTotalDuration(sch.reduce((acc, seg) => acc + seg.duration, 0));
+          setCurrentSegmentIndex(0);
+          setCurrentSegmentRemaining(sch[0].duration);
+          setElapsedTime(0);
+          setMode("timer");
+          setIsRunning(true);
+        }
+      }, [mode, countdown]);
+      useEffect(() => {
+        if (mode !== "timer" || !isRunning) return;
+        intervalRef.current = setInterval(() => {
+          setCurrentSegmentRemaining((prev) => {
+            if (prev > 1) {
+              const newTime = prev - 1;
+              if (newTime <= 3) {
+                tripleBeep();
+              } else if (newTime === Math.floor(schedule[currentSegmentIndex].duration / 2)) {
+                beep(550, 0.2);
+              }
+              setElapsedTime(et => et + 1);
+              return newTime;
+            } else {
+              beep(880, 0.2);
+              setElapsedTime(et => et + 1);
+              const nextIndex = currentSegmentIndex + 1;
+              if (nextIndex < schedule.length) {
+                setCurrentSegmentIndex(nextIndex);
+                return schedule[nextIndex].duration;
+              } else {
+                clearInterval(intervalRef.current);
+                setIsRunning(false);
+                return 0;
+              }
+            }
+          });
+        }, 1000);
+        return () => clearInterval(intervalRef.current);
+      }, [mode, isRunning, currentSegmentIndex, schedule]);
+      const togglePause = () => setIsRunning(!isRunning);
+      const resetWorkout = () => {
+        if (window.confirm("Are you sure you want to reset the workout?")) {
+          clearInterval(intervalRef.current);
+          setMode("settings");
+        }
+      };
+      const formatTime = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins}:${secs.toString().padStart(2, '0')}`;
+      };
+      if (mode === "settings") {
+        const totalTime = calculateTotalTime();
+        return (
+          <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-gray-100">
+            <div className="bg-white rounded-lg shadow-xl p-8 w-96">
+              <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Workout Timer</h1>
+              <div className="flex gap-2 mb-6">
+                <button onClick={() => applyPreset("classic")} className="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition">Classic</button>
+                <button onClick={() => applyPreset("strength")} className="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition">Strength</button>
+                <button onClick={() => applyPreset("endurance")} className="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition">Endurance</button>
+              </div>
+              <div className="space-y-4">
+                <div className="flex flex-col">
+                  <label className="text-sm text-gray-600 mb-1">Work Time (seconds)</label>
+                  <input type="number" value={workTime} onChange={handleInput(setWorkTime)} min="1" className="p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"/>
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-sm text-gray-600 mb-1">Rest Time (seconds)</label>
+                  <input type="number" value={exerciseRest} onChange={handleInput(setExerciseRest)} min="1" className="p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"/>
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-sm text-gray-600 mb-1">Round Rest (seconds)</label>
+                  <input type="number" value={roundRest} onChange={handleInput(setRoundRest)} min="0" className="p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"/>
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-sm text-gray-600 mb-1">Rounds</label>
+                  <input type="number" value={rounds} onChange={handleInput(setRounds)} min="1" className="p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"/>
+                </div>
+                <div className="flex flex-col">
+                  <label className="text-sm text-gray-600 mb-1">Exercises per Round</label>
+                  <input type="number" value={exercises} onChange={handleInput(setExercises)} min="1" className="p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"/>
+                </div>
+                <div className="text-center text-gray-600 mt-4">
+                  Total workout time: {formatTime(totalTime)}
+                </div>
+                <button onClick={startWorkout} className="w-full bg-green-500 text-white p-3 rounded hover:bg-green-600 transition mt-4">Start Workout</button>
+              </div>
+            </div>
+          </div>
+        );
+      }
+      if (mode === "countdown") {
+        return (
+          <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
+            <div className="text-9xl font-bold text-blue-500">{countdown}</div>
+          </div>
+        );
+      }
+      if (mode === "timer") {
+        const currentSegment = schedule[currentSegmentIndex];
+        const nextSegment = currentSegmentIndex < schedule.length - 1 ? schedule[currentSegmentIndex + 1] : null;
+        const totalTimeLeft = totalDuration - elapsedTime;
+        const colors = ['bg-blue-500','bg-green-500','bg-yellow-500','bg-purple-500','bg-red-500','bg-indigo-500','bg-pink-500','bg-teal-500'];
+        const roundsDurations = Array.from({ length: rounds }, (_, i) =>
+          schedule.filter(seg => seg.round === i + 1).reduce((s, seg) => s + seg.duration, 0)
+        );
+        const activeRound = currentSegment.phase === "Round Rest" ? currentSegment.round + 1 : currentSegment.round;
+        let thinRoundElapsed = 0;
+        schedule.forEach((seg, idx) => {
+          if (seg.round === activeRound) {
+            if (idx < currentSegmentIndex) {
+              thinRoundElapsed += seg.duration;
+            } else if (idx === currentSegmentIndex && currentSegment.phase !== "Round Rest") {
+              thinRoundElapsed += (seg.duration - currentSegmentRemaining);
+            }
+          }
+        });
+        const thinProgressPercent = activeRound <= rounds ? (thinRoundElapsed / roundsDurations[activeRound - 1]) * 100 : 100;
+        const activeMainRound = currentSegment.phase === "Round Rest" ? currentSegment.round + 1 : currentSegment.round;
+        let roundElapsed = 0;
+        schedule.forEach((seg, idx) => {
+          if (seg.round === activeMainRound) {
+            if (idx < currentSegmentIndex && currentSegment.phase !== "Round Rest") {
+              roundElapsed += seg.duration;
+            } else if (idx === currentSegmentIndex && currentSegment.phase !== "Round Rest") {
+              roundElapsed += (seg.duration - currentSegmentRemaining);
+            }
+          }
+        });
+        const mainProgressPercent = activeMainRound <= rounds ? (roundElapsed / roundsDurations[activeMainRound - 1]) * 100 : 100;
+        return (
+          <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-gray-100">
+            <div className="bg-white rounded-lg shadow-xl p-8 w-96">
+              <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Workout Timer</h1>
+              <div className="mb-6">
+                <div className={`text-xl font-bold text-center p-3 rounded mb-4 text-white ${currentSegment.phase === "Work" ? "bg-green-500" : currentSegment.phase === "Rest" ? "bg-blue-500" : "bg-purple-500"}`}>
+                  {currentSegment.phase}
+                </div>
+                <div className="text-xl text-center mb-2">Round {currentSegment.phase === "Round Rest" ? currentSegment.round + 1 : currentSegment.round} of {rounds}</div>
+                {currentSegment.phase === "Work" && (
+                  <div className="text-lg text-center text-gray-600">Exercise {currentSegment.exercise} of {exercises}</div>
+                )}
+                {nextSegment && (
+                  <div className="text-sm text-center text-gray-500 mt-2">Next: {nextSegment.phase}</div>
+                )}
+              </div>
+              <div className="text-6xl font-bold text-center mb-6">{currentSegmentRemaining}s</div>
+              <div className="w-full bg-gray-200 h-4 rounded-full mb-2 overflow-hidden flex">
+                {Array.from({ length: rounds }, (_, i) => {
+                  let fill = 0;
+                  if (i + 1 < activeMainRound) {
+                    fill = 100;
+                  } else if (i + 1 === activeMainRound) {
+                    fill = mainProgressPercent;
+                  }
+                  return (
+                    <div key={i} className="relative" style={{ width: `${100/rounds}%` }}>
+                      <div className={`${colors[i % colors.length]} h-full`} style={{ width: `${fill}%`, transition: "width 0.5s" }}></div>
+                    </div>
+                  );
+                })}
+              </div>
+              <div className="w-full bg-gray-200 h-2 rounded-full mb-4 overflow-hidden">
+                <div className="bg-gray-600 h-full" style={{ width: `${thinProgressPercent}%`, transition: "width 0.5s" }}></div>
+              </div>
+              <div className="text-center mb-6 text-gray-600">
+                Total time left: {formatTime(totalTimeLeft)}
+              </div>
+              <div className="flex gap-4">
+                <button onClick={togglePause} className={`flex-1 p-3 rounded text-white transition ${isRunning ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'}`}>
+                  {isRunning ? "Pause" : "Resume"}
+                </button>
+                <button onClick={resetWorkout} className="flex-1 bg-red-500 text-white p-3 rounded hover:bg-red-600 transition">
+                  Reset
+                </button>
+              </div>
+              {(!isRunning && currentSegmentIndex === schedule.length - 1 && currentSegmentRemaining === 0) && (
+                <div className="text-2xl font-bold text-green-500 text-center mt-6">Workout Complete!</div>
+              )}
+            </div>
+          </div>
+        );
+      }
+      return null;
+    }
+    const root = ReactDOM.createRoot(document.getElementById('root'));
+    root.render(<TabataTimer />);
+  </script>
+</body>
+</html>
