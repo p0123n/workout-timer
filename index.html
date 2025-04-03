@@ -205,7 +205,7 @@
         const currentSegment = schedule[currentSegmentIndex];
         const nextSegment = currentSegmentIndex < schedule.length - 1 ? schedule[currentSegmentIndex + 1] : null;
         const totalTimeLeft = totalDuration - elapsedTime;
-        const colors = ['bg-blue-500','bg-green-500','bg-yellow-500','bg-purple-500','bg-red-500','bg-indigo-500','bg-pink-500','bg-teal-500'];
+        const colors = ['bg-blue-500','bg-green-500','bg-red-500', 'bg-yellow-500','bg-purple-500','bg-indigo-500','bg-pink-500','bg-teal-500'];
         const roundsDurations = Array.from({ length: rounds }, (_, i) =>
           schedule.filter(seg => seg.round === i + 1).reduce((s, seg) => s + seg.duration, 0)
         );
