@@ -1,295 +1,840 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Workout Timer</title>
-  <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-  <script src="https://unpkg.com/react@18/umd/react.development.js" crossorigin></script>
-  <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js" crossorigin></script>
-  <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Workout Timer</title>
+    <style>
+        :root {
+            --color-bg: #f3f4f6;
+            --color-card-bg: #ffffff;
+            --color-text: #1f2937;
+            --color-text-secondary: #4b5563;
+            --color-text-light: #6b7280;
+            --color-primary: #3b82f6;
+            --color-primary-hover: #2563eb;
+            --color-green: #22c55e;
+            --color-green-hover: #16a34a;
+            --color-yellow: #eab308;
+            --color-yellow-hover: #ca8a04;
+            --color-red: #ef4444;
+            --color-red-hover: #dc2626;
+            --color-purple: #a855f7;
+            --color-gray: #6b7280;
+            --color-border: #e5e7eb;
+            --color-progress-bg: #e5e7eb;
+
+            --round-color-1: #3b82f6;
+            --round-color-2: #22c55e;
+            --round-color-3: #ef4444;
+            --round-color-4: #eab308;
+            --round-color-5: #a855f7;
+            --round-color-6: #ec4899;
+            --round-color-7: #14b8a6;
+            --round-color-8: #f97316;
+        }
+
+        body {
+            margin: 0;
+            padding: 0;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background-color: var(--color-bg);
+            font-family: system-ui, -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+            color: var(--color-text);
+        }
+
+        .hidden {
+            display: none !important;
+        }
+
+        .timer-app {
+            background-color: var(--color-card-bg);
+            border-radius: 0.5rem;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+            padding: 1.5rem;
+            width: 360px;
+            min-height: 580px;
+            box-sizing: border-box;
+            display: flex;
+            flex-direction: column;
+            overflow: hidden;
+        }
+
+        h1 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-bottom: 1.5rem;
+            text-align: center;
+            color: var(--color-text);
+        }
+
+        #settings-view .preset-buttons {
+            display: flex;
+            gap: 0.5rem;
+            margin-bottom: 1.5rem;
+        }
+
+        #settings-view .preset-buttons button {
+            flex: 1;
+        }
+
+        #settings-view .input-group {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 0.8rem;
+        }
+
+        #settings-view label {
+            font-size: 0.875rem;
+            color: var(--color-text-light);
+        }
+
+        #settings-view input[type="number"] {
+            padding: 0.5rem;
+            border: 1px solid var(--color-border);
+            border-radius: 0.375rem;
+            outline: none;
+            width: 5rem;
+            text-align: right;
+            font-size: 0.875rem;
+        }
+         #settings-view input[type="number"]:focus {
+             border-color: var(--color-primary);
+             box-shadow: 0 0 0 2px rgba(59, 130, 246, 0.5);
+         }
+
+        #settings-view .total-time {
+            text-align: center;
+            color: var(--color-text-light);
+            margin-top: 1.5rem;
+            font-size: 0.875rem;
+        }
+
+        #settings-view #start-button {
+            width: 100%;
+            margin-top: 1rem;
+        }
+
+        #countdown-view {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            flex-grow: 1;
+        }
+
+        #countdown-display {
+            font-size: 6rem;
+            font-weight: 700;
+            color: var(--color-primary);
+        }
+
+         #timer-view h1 {
+             margin-bottom: 1rem;
+         }
+
+        #timer-view .info-display {
+            margin-bottom: 1rem;
+            text-align: center;
+        }
+
+        #timer-view #phase-display {
+            font-size: 1.125rem;
+            font-weight: 700;
+            padding: 0.75rem;
+            border-radius: 0.375rem;
+            margin-bottom: 0.75rem;
+            color: white;
+        }
+         #timer-view #phase-display.work { background-color: var(--color-green); }
+         #timer-view #phase-display.rest { background-color: var(--color-primary); }
+         #timer-view #phase-display.round-rest { background-color: var(--color-purple); }
+
+
+        #timer-view #round-info {
+            font-size: 1.125rem;
+            color: var(--color-text-secondary);
+        }
+
+        #timer-view #exercise-info {
+            font-size: 1rem;
+            color: var(--color-text-light);
+            min-height: 1.5em; /* Ensure space is reserved, adjust if needed based on font/line-height */
+        }
+
+        #timer-view #next-phase-info {
+            font-size: 0.875rem;
+            color: var(--color-text-light);
+            margin-top: 0.25rem;
+        }
+
+        #timer-view #time-remaining-display {
+            font-size: 4rem;
+            font-weight: 700;
+            text-align: center;
+            margin-bottom: 1rem;
+            line-height: 1;
+        }
+
+        .progress-bar-container {
+            width: 100%;
+            background-color: var(--color-progress-bg);
+            height: 0.75rem;
+            border-radius: 9999px;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+        }
+         .progress-bar-container.overall {
+             margin-bottom: 1rem;
+             display: flex;
+             border-radius: 9999px;
+         }
+
+        .progress-bar {
+            height: 100%;
+            transition: width 0.5s ease-out;
+        }
+         .progress-bar.segment {
+            border-radius: 9999px;
+         }
+
+         .progress-bar.overall-segment {
+             height: 100%;
+             position: relative;
+             overflow: hidden;
+         }
+         .progress-bar.overall-segment .fill {
+             position: absolute;
+             left: 0;
+             top: 0;
+             height: 100%;
+             border-radius: 9999px;
+             transition: width 0.5s ease-out;
+         }
+
+         .round-1 { background-color: var(--round-color-1); }
+         .round-2 { background-color: var(--round-color-2); }
+         .round-3 { background-color: var(--round-color-3); }
+         .round-4 { background-color: var(--round-color-4); }
+         .round-5 { background-color: var(--round-color-5); }
+         .round-6 { background-color: var(--round-color-6); }
+         .round-7 { background-color: var(--round-color-7); }
+         .round-8 { background-color: var(--round-color-8); }
+
+
+        #timer-view #total-time-left-display {
+            text-align: center;
+            margin-bottom: 1.5rem;
+            color: var(--color-text-light);
+            font-size: 0.875rem;
+        }
+
+        #timer-view .control-buttons {
+            display: flex;
+            gap: 0.75rem;
+        }
+
+        #timer-view .control-buttons button {
+            flex: 1;
+        }
+
+        #timer-view #completion-message {
+            font-size: 1.25rem;
+            font-weight: 700;
+            color: var(--color-green);
+            text-align: center;
+            margin-top: 1.5rem;
+        }
+
+        button {
+            padding: 0.75rem;
+            border: none;
+            border-radius: 0.375rem;
+            color: white;
+            font-size: 0.875rem;
+            font-weight: 500;
+            cursor: pointer;
+            transition: background-color 0.2s ease;
+        }
+        button.primary { background-color: var(--color-primary); }
+        button.primary:hover { background-color: var(--color-primary-hover); }
+        button.green { background-color: var(--color-green); }
+        button.green:hover { background-color: var(--color-green-hover); }
+        button.yellow { background-color: var(--color-yellow); }
+        button.yellow:hover { background-color: var(--color-yellow-hover); }
+        button.red { background-color: var(--color-red); }
+        button.red:hover { background-color: var(--color-red-hover); }
+
+        button:disabled {
+            background-color: #9ca3af;
+            cursor: not-allowed;
+        }
+         #settings-view .preset-buttons button {
+             padding: 0.5rem;
+             background-color: var(--color-primary);
+         }
+         #settings-view .preset-buttons button:hover {
+             background-color: var(--color-primary-hover);
+         }
+    </style>
 </head>
-<body class="bg-gray-100">
-  <div id="root"></div>
-  <script type="text/babel">
-    const { useState, useEffect, useRef } = React;
-    const presets = {
-      classic: { workTime: 20, exerciseRest: 10, roundRest: 0, rounds: 8, exercises: 1 },
-      strength: { workTime: 45, exerciseRest: 15, roundRest: 30, rounds: 4, exercises: 4 },
-      endurance: { workTime: 30, exerciseRest: 15, roundRest: 30, rounds: 4, exercises: 2 }
-    };
-    function TabataTimer() {
-      const [mode, setMode] = useState("settings");
-      const [workTime, setWorkTime] = useState(45);
-      const [exerciseRest, setExerciseRest] = useState(15);
-      const [roundRest, setRoundRest] = useState(30);
-      const [rounds, setRounds] = useState(4);
-      const [exercises, setExercises] = useState(4);
-      const [schedule, setSchedule] = useState([]);
-      const [totalDuration, setTotalDuration] = useState(0);
-      const [currentSegmentIndex, setCurrentSegmentIndex] = useState(0);
-      const [currentSegmentRemaining, setCurrentSegmentRemaining] = useState(0);
-      const [elapsedTime, setElapsedTime] = useState(0);
-      const [isRunning, setIsRunning] = useState(false);
-      const [countdown, setCountdown] = useState(3);
-      const audioContextRef = useRef(null);
-      const intervalRef = useRef(null);
-      const initAudio = () => {
-        if (!audioContextRef.current) {
-          audioContextRef.current = new (window.AudioContext || window.webkitAudioContext)();
-        }
-      };
-      const beep = (frequency, duration) => {
-        if (!audioContextRef.current) return;
-        const oscillator = audioContextRef.current.createOscillator();
-        const gain = audioContextRef.current.createGain();
-        oscillator.connect(gain);
-        gain.connect(audioContextRef.current.destination);
-        oscillator.frequency.value = frequency;
-        oscillator.type = "sine";
-        gain.gain.value = 0.1;
-        oscillator.start();
-        oscillator.stop(audioContextRef.current.currentTime + duration);
-      };
-      const tripleBeep = () => {
-        beep(440, 0.1);
-        setTimeout(() => beep(440, 0.1), 200);
-        setTimeout(() => beep(440, 0.1), 400);
-      };
-      const calculateTotalTime = () => {
-        const totalWorkTime = workTime * exercises * rounds;
-        const totalExerciseRest = exerciseRest * (exercises - 1) * rounds;
-        const totalRoundRest = roundRest * (rounds - 1);
-        return totalWorkTime + totalExerciseRest + totalRoundRest;
-      };
-      const buildSchedule = () => {
-        let segments = [];
-        for (let i = 1; i <= rounds; i++) {
-          for (let j = 1; j <= exercises; j++) {
-            segments.push({ phase: "Work", round: i, exercise: j, duration: workTime });
-            if (j < exercises) {
-              segments.push({ phase: "Rest", round: i, exercise: j, duration: exerciseRest });
+<body>
+    <div class="timer-app" id="timer-app">
+
+        <div id="settings-view">
+            <h1>Workout Timer</h1>
+            <div class="preset-buttons">
+                <button id="preset-classic">Classic</button>
+                <button id="preset-strength">Strength</button>
+                <button id="preset-endurance">Endurance</button>
+            </div>
+            <div class="input-fields">
+                <div class="input-group">
+                    <label for="work-time">Work Time (s)</label>
+                    <input type="number" id="work-time" min="1" value="45">
+                </div>
+                <div class="input-group">
+                    <label for="exercise-rest">Rest Time (s)</label>
+                    <input type="number" id="exercise-rest" min="1" value="15">
+                </div>
+                <div class="input-group">
+                    <label for="round-rest">Round Rest (s)</label>
+                    <input type="number" id="round-rest" min="0" value="30">
+                </div>
+                <div class="input-group">
+                    <label for="rounds">Rounds</label>
+                    <input type="number" id="rounds" min="1" value="4">
+                </div>
+                <div class="input-group">
+                    <label for="exercises">Exercises/Round</label>
+                    <input type="number" id="exercises" min="1" value="4">
+                </div>
+            </div>
+            <div class="total-time" id="total-time-display">Total workout time: 0:00</div>
+            <button id="start-button" class="green">Start Workout</button>
+        </div>
+
+        <div id="countdown-view" class="hidden">
+            <div id="countdown-display">3</div>
+        </div>
+
+        <div id="timer-view" class="hidden">
+             <h1>Workout Active</h1>
+             <div class="info-display">
+                 <div id="phase-display" class="phase-display">Work</div>
+                 <div id="round-info">Round 1 of 4</div>
+                 <div id="exercise-info">Exercise 1 of 4</div>
+                 <div id="next-phase-info">Next: Rest</div>
+             </div>
+             <div id="time-remaining-display">45s</div>
+             <div class="progress-bar-container">
+                 <div class="progress-bar segment" id="segment-progress-bar"></div>
+             </div>
+             <div class="progress-bar-container overall" id="overall-progress-bar-container">
+                 </div>
+             <div id="total-time-left-display">Total time left: 0:00</div>
+             <div class="control-buttons">
+                 <button id="pause-resume-button" class="yellow">Pause</button>
+                 <button id="reset-button" class="red">Reset</button>
+             </div>
+             <div id="completion-message" class="hidden">Workout Complete! 🎉</div>
+        </div>
+
+    </div>
+
+    <script>
+        const presets = {
+            classic: { workTime: 20, exerciseRest: 10, roundRest: 0, rounds: 8, exercises: 1 },
+            strength: { workTime: 45, exerciseRest: 15, roundRest: 30, rounds: 4, exercises: 4 },
+            endurance: { workTime: 30, exerciseRest: 15, roundRest: 30, rounds: 4, exercises: 2 }
+        };
+
+        let mode = 'settings';
+        let workTime = 45;
+        let exerciseRest = 15;
+        let roundRest = 30;
+        let rounds = 4;
+        let exercises = 4;
+
+        let schedule = [];
+        let totalDuration = 0;
+        let currentSegmentIndex = 0;
+        let currentSegmentRemaining = 0;
+        let elapsedTime = 0;
+        let isRunning = false;
+        let countdown = 3;
+
+        let intervalId = null;
+        let audioContext = null;
+
+        const settingsView = document.getElementById('settings-view');
+        const countdownView = document.getElementById('countdown-view');
+        const timerView = document.getElementById('timer-view');
+
+        const workTimeInput = document.getElementById('work-time');
+        const exerciseRestInput = document.getElementById('exercise-rest');
+        const roundRestInput = document.getElementById('round-rest');
+        const roundsInput = document.getElementById('rounds');
+        const exercisesInput = document.getElementById('exercises');
+        const totalTimeDisplay = document.getElementById('total-time-display');
+        const startButton = document.getElementById('start-button');
+
+        const countdownDisplay = document.getElementById('countdown-display');
+
+        const phaseDisplay = document.getElementById('phase-display');
+        const roundInfoDisplay = document.getElementById('round-info');
+        const exerciseInfoDisplay = document.getElementById('exercise-info');
+        const nextPhaseInfoDisplay = document.getElementById('next-phase-info');
+        const timeRemainingDisplay = document.getElementById('time-remaining-display');
+        const segmentProgressBar = document.getElementById('segment-progress-bar');
+        const overallProgressBarContainer = document.getElementById('overall-progress-bar-container');
+        const totalTimeLeftDisplay = document.getElementById('total-time-left-display');
+        const pauseResumeButton = document.getElementById('pause-resume-button');
+        const resetButton = document.getElementById('reset-button');
+        const completionMessage = document.getElementById('completion-message');
+
+        function initAudio() {
+            if (!audioContext && (window.AudioContext || window.webkitAudioContext)) {
+                try {
+                    audioContext = new (window.AudioContext || window.webkitAudioContext)();
+                } catch (e) {
+                    console.warn("Web Audio API is not supported.");
+                    audioContext = null;
+                }
             }
-          }
-          if (i < rounds) {
-            segments.push({ phase: "Round Rest", round: i, exercise: null, duration: roundRest });
-          }
         }
-        return segments;
-      };
-      const startWorkout = () => {
-        initAudio();
-        setMode("countdown");
-        setCountdown(3);
-      };
-      const handleInput = (setter) => (e) => {
-        const value = Math.max(1, parseInt(e.target.value) || 0);
-        setter(value);
-      };
-      const applyPreset = (preset) => {
-        const settings = presets[preset];
-        setWorkTime(settings.workTime);
-        setExerciseRest(settings.exerciseRest);
-        setRoundRest(settings.roundRest);
-        setRounds(settings.rounds);
-        setExercises(settings.exercises);
-      };
-      useEffect(() => {
-        if (mode === "countdown" && countdown > 0) {
-          beep(660, 0.1);
-          const timer = setTimeout(() => setCountdown(c => c - 1), 1000);
-          return () => clearTimeout(timer);
+
+        function beep(frequency, duration) {
+            if (!audioContext) return;
+            try {
+                const oscillator = audioContext.createOscillator();
+                const gain = audioContext.createGain();
+                oscillator.connect(gain);
+                gain.connect(audioContext.destination);
+                oscillator.frequency.value = frequency;
+                oscillator.type = "sine";
+                gain.gain.value = 0.1;
+                oscillator.start(audioContext.currentTime);
+                oscillator.stop(audioContext.currentTime + duration / 1000);
+            } catch (e) {
+                 console.warn("Audio playback failed.", e);
+            }
         }
-        if (mode === "countdown" && countdown === 0) {
-          const sch = buildSchedule();
-          setSchedule(sch);
-          setTotalDuration(sch.reduce((acc, seg) => acc + seg.duration, 0));
-          setCurrentSegmentIndex(0);
-          setCurrentSegmentRemaining(sch[0].duration);
-          setElapsedTime(0);
-          setMode("timer");
-          setIsRunning(true);
+
+        const countdownBeep = () => beep(660, 100);
+        const startBeep = () => beep(880, 200);
+        const halfwayBeep = () => beep(550, 200);
+
+        function calculateTotalTime() {
+            const wt = parseInt(workTimeInput.value) || 0;
+            const er = parseInt(exerciseRestInput.value) || 0;
+            const rr = parseInt(roundRestInput.value) || 0;
+            const r = parseInt(roundsInput.value) || 1;
+            const e = parseInt(exercisesInput.value) || 1;
+
+            const validWt = isNaN(wt) || wt < 0 ? workTime : wt;
+            const validEr = isNaN(er) || er < 0 ? exerciseRest : er;
+            const validRr = isNaN(rr) || rr < 0 ? roundRest : rr;
+            const validR = isNaN(r) || r < 1 ? rounds : r;
+            const validE = isNaN(e) || e < 1 ? exercises : e;
+
+            const totalWorkTime = validWt * validE * validR;
+            const totalExerciseRest = validE > 1 ? (validEr * (validE - 1) * validR) : 0;
+            const totalRoundRest = validR > 1 ? (validRr * (validR - 1)) : 0;
+
+            return totalWorkTime + totalExerciseRest + totalRoundRest;
         }
-      }, [mode, countdown]);
-      useEffect(() => {
-        if (mode !== "timer" || !isRunning) return;
-        intervalRef.current = setInterval(() => {
-          setCurrentSegmentRemaining((prev) => {
-            if (prev > 1) {
-              const newTime = prev - 1;
-              if (newTime <= 3) {
-                tripleBeep();
-              } else if (newTime === Math.floor(schedule[currentSegmentIndex].duration / 2)) {
-                beep(550, 0.2);
-              }
-              setElapsedTime(et => et + 1);
-              return newTime;
+
+        function formatTime(seconds) {
+            const mins = Math.floor(seconds / 60);
+            const secs = seconds % 60;
+            return `${mins}:${secs.toString().padStart(2, '0')}`;
+        }
+
+        function buildSchedule() {
+            let segments = [];
+            const r = rounds;
+            const e = exercises;
+            const wt = workTime;
+            const er = exerciseRest;
+            const rr = roundRest;
+
+            for (let i = 1; i <= r; i++) {
+                for (let j = 1; j <= e; j++) {
+                    if (wt > 0) segments.push({ phase: "Work", round: i, exercise: j, duration: wt });
+                    if (j < e && er > 0) {
+                        segments.push({ phase: "Rest", round: i, exercise: j, duration: er });
+                    }
+                }
+                if (i < r && rr > 0) {
+                    segments.push({ phase: "Round Rest", round: i, exercise: null, duration: rr });
+                }
+            }
+            return segments;
+        }
+
+        function updateSettingsUI() {
+            workTimeInput.value = workTime;
+            exerciseRestInput.value = exerciseRest;
+            roundRestInput.value = roundRest;
+            roundsInput.value = rounds;
+            exercisesInput.value = exercises;
+            updateTotalTimeDisplay();
+        }
+
+        function updateTotalTimeDisplay() {
+             const total = calculateTotalTime();
+             totalTimeDisplay.textContent = `Total workout time: ${formatTime(total)}`;
+             startButton.disabled = total <= 0;
+             startButton.classList.toggle('green', total > 0);
+        }
+
+        function updateTimerUI() {
+             if (mode !== 'timer' || schedule.length === 0) {
+                 console.warn("UpdateTimerUI called in invalid state or empty schedule.");
+                 return;
+             }
+             const isFinished = !isRunning && currentSegmentRemaining === 0 && currentSegmentIndex >= schedule.length -1 ;
+
+             if (isFinished) {
+                 completionMessage.classList.remove('hidden');
+                 pauseResumeButton.disabled = true;
+                 timeRemainingDisplay.textContent = `0s`;
+                 totalTimeLeftDisplay.textContent = `Total time left: ${formatTime(0)}`;
+                 segmentProgressBar.style.width = `100%`;
+                 updateOverallProgressBar();
+                 return;
+             }
+
+            if (currentSegmentIndex >= schedule.length) {
+                 console.error("currentSegmentIndex out of bounds", currentSegmentIndex, schedule.length);
+                 resetToSettings();
+                 return;
+            }
+
+
+            const currentSegment = schedule[currentSegmentIndex];
+            const nextSegment = currentSegmentIndex < schedule.length - 1 ? schedule[currentSegmentIndex + 1] : null;
+            const totalTimeLeft = totalDuration - elapsedTime;
+
+            phaseDisplay.textContent = currentSegment.phase;
+            phaseDisplay.className = 'phase-display';
+            if (currentSegment.phase === 'Work') phaseDisplay.classList.add('work');
+            else if (currentSegment.phase === 'Rest') phaseDisplay.classList.add('rest');
+            else phaseDisplay.classList.add('round-rest');
+
+            const displayRound = currentSegment.phase === "Round Rest" ? currentSegment.round + 1 : currentSegment.round;
+            roundInfoDisplay.textContent = `Round ${displayRound} of ${rounds}`;
+
+            if (currentSegment.phase === 'Work') {
+                exerciseInfoDisplay.textContent = `Exercise ${currentSegment.exercise} of ${exercises}`;
             } else {
-              beep(880, 0.2);
-              setElapsedTime(et => et + 1);
-              const nextIndex = currentSegmentIndex + 1;
-              if (nextIndex < schedule.length) {
-                setCurrentSegmentIndex(nextIndex);
-                return schedule[nextIndex].duration;
-              } else {
-                clearInterval(intervalRef.current);
-                setIsRunning(false);
-                return 0;
-              }
+                exerciseInfoDisplay.innerHTML = '&nbsp;';
             }
-          });
-        }, 1000);
-        return () => clearInterval(intervalRef.current);
-      }, [mode, isRunning, currentSegmentIndex, schedule]);
-      const togglePause = () => setIsRunning(!isRunning);
-      const resetWorkout = () => {
-        if (window.confirm("Are you sure you want to reset the workout?")) {
-          clearInterval(intervalRef.current);
-          setMode("settings");
+
+            if (nextSegment) {
+                nextPhaseInfoDisplay.textContent = `Next: ${nextSegment.phase}`;
+                nextPhaseInfoDisplay.classList.remove('hidden');
+            } else {
+                nextPhaseInfoDisplay.textContent = '';
+                nextPhaseInfoDisplay.classList.add('hidden');
+            }
+
+            timeRemainingDisplay.textContent = `${currentSegmentRemaining}s`;
+
+            const segmentDuration = currentSegment.duration || 1;
+            const segmentProgressPercent = segmentDuration > 0 ? Math.min(100, ((segmentDuration - currentSegmentRemaining) / segmentDuration) * 100) : 0;
+            segmentProgressBar.style.width = `${segmentProgressPercent}%`;
+
+            const currentRound = currentSegment.round;
+            const roundColorClass = `round-${((currentRound - 1) % 8) + 1}`;
+            segmentProgressBar.className = 'progress-bar segment';
+            segmentProgressBar.classList.add(roundColorClass);
+
+
+            updateOverallProgressBar();
+
+            totalTimeLeftDisplay.textContent = `Total time left: ${formatTime(totalTimeLeft < 0 ? 0 : totalTimeLeft)}`;
+
+            pauseResumeButton.textContent = isRunning ? "Pause" : "Resume";
+            pauseResumeButton.className = ' ';
+            pauseResumeButton.classList.add(isRunning ? 'yellow' : 'green');
+            pauseResumeButton.disabled = false;
+            completionMessage.classList.add('hidden');
         }
-      };
-      const formatTime = (seconds) => {
-        const mins = Math.floor(seconds / 60);
-        const secs = seconds % 60;
-        return `${mins}:${secs.toString().padStart(2, '0')}`;
-      };
-      if (mode === "settings") {
-        const totalTime = calculateTotalTime();
-        return (
-          <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-gray-100">
-            <div className="bg-white rounded-lg shadow-xl p-8 w-96">
-              <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Workout Timer</h1>
-              <div className="flex gap-2 mb-6">
-                <button onClick={() => applyPreset("classic")} className="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition">Classic</button>
-                <button onClick={() => applyPreset("strength")} className="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition">Strength</button>
-                <button onClick={() => applyPreset("endurance")} className="flex-1 bg-blue-500 text-white p-2 rounded hover:bg-blue-600 transition">Endurance</button>
-              </div>
-              <div className="space-y-4">
-                <div className="flex flex-col">
-                  <label className="text-sm text-gray-600 mb-1">Work Time (seconds)</label>
-                  <input type="number" value={workTime} onChange={handleInput(setWorkTime)} min="1" className="p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"/>
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm text-gray-600 mb-1">Rest Time (seconds)</label>
-                  <input type="number" value={exerciseRest} onChange={handleInput(setExerciseRest)} min="1" className="p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"/>
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm text-gray-600 mb-1">Round Rest (seconds)</label>
-                  <input type="number" value={roundRest} onChange={handleInput(setRoundRest)} min="0" className="p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"/>
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm text-gray-600 mb-1">Rounds</label>
-                  <input type="number" value={rounds} onChange={handleInput(setRounds)} min="1" className="p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"/>
-                </div>
-                <div className="flex flex-col">
-                  <label className="text-sm text-gray-600 mb-1">Exercises per Round</label>
-                  <input type="number" value={exercises} onChange={handleInput(setExercises)} min="1" className="p-2 border rounded focus:ring-2 focus:ring-blue-500 outline-none"/>
-                </div>
-                <div className="text-center text-gray-600 mt-4">
-                  Total workout time: {formatTime(totalTime)}
-                </div>
-                <button onClick={startWorkout} className="w-full bg-green-500 text-white p-3 rounded hover:bg-green-600 transition mt-4">Start Workout</button>
-              </div>
-            </div>
-          </div>
-        );
-      }
-      if (mode === "countdown") {
-        return (
-          <div className="flex flex-col items-center justify-center min-h-screen bg-gray-100">
-            <div className="text-9xl font-bold text-blue-500">{countdown}</div>
-          </div>
-        );
-      }
-      if (mode === "timer") {
-        const currentSegment = schedule[currentSegmentIndex];
-        const nextSegment = currentSegmentIndex < schedule.length - 1 ? schedule[currentSegmentIndex + 1] : null;
-        const totalTimeLeft = totalDuration - elapsedTime;
-        const colors = ['bg-blue-500','bg-green-500','bg-red-500', 'bg-yellow-500','bg-purple-500','bg-indigo-500','bg-pink-500','bg-teal-500'];
-        const roundsDurations = Array.from({ length: rounds }, (_, i) =>
-          schedule.filter(seg => seg.round === i + 1).reduce((s, seg) => s + seg.duration, 0)
-        );
-        const activeRound = currentSegment.phase === "Round Rest" ? currentSegment.round + 1 : currentSegment.round;
-        let thinRoundElapsed = 0;
-        schedule.forEach((seg, idx) => {
-          if (seg.round === activeRound) {
-            if (idx < currentSegmentIndex) {
-              thinRoundElapsed += seg.duration;
-            } else if (idx === currentSegmentIndex && currentSegment.phase !== "Round Rest") {
-              thinRoundElapsed += (seg.duration - currentSegmentRemaining);
+
+        function updateOverallProgressBar() {
+             overallProgressBarContainer.innerHTML = '';
+             if (totalDuration <= 0) return;
+
+             let accumulatedDurationBeforeRound = 0;
+             const roundData = [];
+
+             for (let r = 1; r <= rounds; r++) {
+                 let duration = 0;
+                 schedule.forEach(seg => {
+                     if (seg.round === r) {
+                         duration += seg.duration;
+                     }
+                 });
+                 roundData.push({
+                     duration: duration,
+                     colorVar: `--round-color-${((r - 1) % 8) + 1}`
+                 });
+             }
+
+             for (let r = 0; r < rounds; r++) {
+                 const roundDuration = roundData[r].duration;
+                 const roundColorVar = roundData[r].colorVar;
+                 const roundProportion = totalDuration > 0 ? (roundDuration / totalDuration) * 100 : 0;
+
+                 if (roundProportion <= 0) continue;
+
+                 const segmentDiv = document.createElement('div');
+                 segmentDiv.classList.add('progress-bar', 'overall-segment');
+                 segmentDiv.style.width = `${roundProportion}%`;
+
+                 let fillPercent = 0;
+                 const accumulatedDurationAfterRound = accumulatedDurationBeforeRound + roundDuration;
+
+                 if (elapsedTime >= accumulatedDurationAfterRound) {
+                     fillPercent = 100;
+                 } else if (elapsedTime > accumulatedDurationBeforeRound) {
+                     const elapsedInRound = elapsedTime - accumulatedDurationBeforeRound;
+                     fillPercent = roundDuration > 0 ? (elapsedInRound / roundDuration) * 100 : 0;
+                 }
+
+                 fillPercent = Math.max(0, Math.min(100, fillPercent));
+
+                 const fillDiv = document.createElement('div');
+                 fillDiv.classList.add('fill');
+                 fillDiv.style.width = `${fillPercent}%`;
+                 fillDiv.style.backgroundColor = `var(${roundColorVar})`;
+
+                 segmentDiv.appendChild(fillDiv);
+                 overallProgressBarContainer.appendChild(segmentDiv);
+
+                 accumulatedDurationBeforeRound = accumulatedDurationAfterRound;
+             }
+        }
+
+
+        function switchView(newMode) {
+            mode = newMode;
+            settingsView.classList.add('hidden');
+            countdownView.classList.add('hidden');
+            timerView.classList.add('hidden');
+
+            if (mode === 'settings') settingsView.classList.remove('hidden');
+            else if (mode === 'countdown') countdownView.classList.remove('hidden');
+            else if (mode === 'timer') timerView.classList.remove('hidden');
+        }
+
+        function runCountdown() {
+            countdownDisplay.textContent = countdown;
+            if (countdown > 0) {
+                countdownBeep();
+                clearTimeout(intervalId);
+                intervalId = setTimeout(() => {
+                    countdown--;
+                    runCountdown();
+                }, 1000);
+            } else {
+                 clearTimeout(intervalId);
+                startTimer();
             }
-          }
-        });
-        const thinProgressPercent = activeRound <= rounds ? (thinRoundElapsed / roundsDurations[activeRound - 1]) * 100 : 100;
-        const activeMainRound = currentSegment.phase === "Round Rest" ? currentSegment.round + 1 : currentSegment.round;
-        let roundElapsed = 0;
-        schedule.forEach((seg, idx) => {
-          if (seg.round === activeMainRound) {
-            if (idx < currentSegmentIndex && currentSegment.phase !== "Round Rest") {
-              roundElapsed += seg.duration;
-            } else if (idx === currentSegmentIndex && currentSegment.phase !== "Round Rest") {
-              roundElapsed += (seg.duration - currentSegmentRemaining);
+        }
+
+        function startTimer() {
+            schedule = buildSchedule();
+            if (schedule.length === 0) {
+                 console.error("Invalid schedule (empty). Cannot start timer.");
+                 alert("Cannot start timer with current settings (zero duration).");
+                 resetToSettings();
+                 return;
             }
-          }
+            if (schedule[0].duration <= 0) {
+                 console.error("Invalid schedule (first segment has zero duration). Cannot start timer.");
+                 alert("Cannot start timer with current settings (first segment has zero duration).");
+                 resetToSettings();
+                 return;
+            }
+
+
+            totalDuration = schedule.reduce((acc, seg) => acc + seg.duration, 0);
+            currentSegmentIndex = 0;
+            currentSegmentRemaining = schedule[0].duration;
+            elapsedTime = 0;
+            isRunning = true;
+            switchView('timer');
+            updateTimerUI();
+            startBeep();
+
+            clearInterval(intervalId);
+            intervalId = setInterval(tick, 1000);
+        }
+
+        function tick() {
+            if (!isRunning) return;
+
+             if (elapsedTime >= totalDuration) {
+                 isRunning = false;
+                 clearInterval(intervalId);
+                 currentSegmentRemaining = 0;
+                 if (currentSegmentIndex < schedule.length -1) {
+                     currentSegmentIndex = schedule.length -1;
+                 }
+                 updateTimerUI();
+                 return;
+             }
+
+
+            if (currentSegmentRemaining > 1) {
+                currentSegmentRemaining--;
+                elapsedTime++;
+
+                const currentDuration = schedule[currentSegmentIndex]?.duration;
+                if (currentDuration && currentDuration > 0 && currentSegmentRemaining === Math.floor(currentDuration / 2)) {
+                    halfwayBeep();
+                }
+                if (currentSegmentRemaining <= 3 && currentSegmentRemaining > 0) {
+                    countdownBeep();
+                }
+
+            } else {
+                 elapsedTime++;
+                 const nextIndex = currentSegmentIndex + 1;
+
+                if (nextIndex < schedule.length) {
+                    startBeep();
+                    currentSegmentIndex = nextIndex;
+                    currentSegmentRemaining = schedule[nextIndex].duration;
+                } else {
+                    currentSegmentRemaining = 0;
+                    isRunning = false;
+                    clearInterval(intervalId);
+                    startBeep();
+                }
+            }
+            updateTimerUI();
+        }
+
+        function togglePause() {
+             if (!isRunning && currentSegmentRemaining === 0 && currentSegmentIndex >= schedule.length - 1) {
+                 return;
+             }
+            initAudio();
+            isRunning = !isRunning;
+            updateTimerUI();
+        }
+
+        function resetToSettings() {
+            clearInterval(intervalId);
+            clearTimeout(intervalId);
+            intervalId = null;
+
+            isRunning = false;
+            elapsedTime = 0;
+            currentSegmentIndex = 0;
+            currentSegmentRemaining = 0;
+            schedule = [];
+            mode = 'settings';
+
+            completionMessage.classList.add('hidden');
+            pauseResumeButton.disabled = false;
+            pauseResumeButton.textContent = 'Pause';
+            pauseResumeButton.className = 'yellow';
+
+            updateSettingsUI();
+            switchView('settings');
+        }
+
+        function setupEventListeners() {
+            [workTimeInput, exerciseRestInput, roundRestInput, roundsInput, exercisesInput].forEach(input => {
+                input.addEventListener('input', () => {
+                    let value = parseInt(input.value);
+                    const min = parseInt(input.min);
+
+                    if (isNaN(value) || value < min) {
+                         if (!isNaN(value) && value < min) {
+                            value = min;
+                         }
+                    }
+
+                    if (input === workTimeInput) workTime = isNaN(value) || value < 1 ? 1 : value;
+                    else if (input === exerciseRestInput) exerciseRest = isNaN(value) || value < 1 ? 1 : value;
+                    else if (input === roundRestInput) roundRest = isNaN(value) || value < 0 ? 0 : value;
+                    else if (input === roundsInput) rounds = isNaN(value) || value < 1 ? 1 : value;
+                    else if (input === exercisesInput) exercises = isNaN(value) || value < 1 ? 1 : value;
+
+                    updateTotalTimeDisplay();
+                });
+
+                 input.addEventListener('change', () => {
+                     let value = parseInt(input.value);
+                     const min = parseInt(input.min);
+
+                     if (isNaN(value) || value < min) {
+                         input.value = min;
+                         value = min;
+                     }
+                     if (input === workTimeInput) workTime = value;
+                     else if (input === exerciseRestInput) exerciseRest = value;
+                     else if (input === roundRestInput) roundRest = value;
+                     else if (input === roundsInput) rounds = value;
+                     else if (input === exercisesInput) exercises = value;
+
+                     updateTotalTimeDisplay();
+                 });
+            });
+
+            document.getElementById('preset-classic').addEventListener('click', () => applyPreset('classic'));
+            document.getElementById('preset-strength').addEventListener('click', () => applyPreset('strength'));
+            document.getElementById('preset-endurance').addEventListener('click', () => applyPreset('endurance'));
+
+            startButton.addEventListener('click', () => {
+                workTime = parseInt(workTimeInput.value);
+                exerciseRest = parseInt(exerciseRestInput.value);
+                roundRest = parseInt(roundRestInput.value);
+                rounds = parseInt(roundsInput.value);
+                exercises = parseInt(exercisesInput.value);
+
+                if (calculateTotalTime() > 0) {
+                    initAudio();
+                    countdown = 3;
+                    switchView('countdown');
+                    runCountdown();
+                } else {
+                    alert("Cannot start timer with zero total duration.");
+                }
+            });
+
+            pauseResumeButton.addEventListener('click', togglePause);
+            resetButton.addEventListener('click', () => {
+                    resetToSettings();
+            });
+        }
+
+        function applyPreset(presetName) {
+            const settings = presets[presetName];
+            workTime = settings.workTime;
+            exerciseRest = settings.exerciseRest;
+            roundRest = settings.roundRest;
+            rounds = settings.rounds;
+            exercises = settings.exercises;
+            updateSettingsUI();
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            updateSettingsUI();
+            setupEventListeners();
+            switchView('settings');
         });
-        const mainProgressPercent = activeMainRound <= rounds ? (roundElapsed / roundsDurations[activeMainRound - 1]) * 100 : 100;
-        return (
-          <div className="flex flex-col items-center justify-center min-h-screen p-8 bg-gray-100">
-            <div className="bg-white rounded-lg shadow-xl p-8 w-96">
-              <h1 className="text-3xl font-bold mb-6 text-center text-gray-800">Workout Timer</h1>
-              <div className="mb-6">
-                <div className={`text-xl font-bold text-center p-3 rounded mb-4 text-white ${currentSegment.phase === "Work" ? "bg-green-500" : currentSegment.phase === "Rest" ? "bg-blue-500" : "bg-purple-500"}`}>
-                  {currentSegment.phase}
-                </div>
-                <div className="text-xl text-center mb-2">Round {currentSegment.phase === "Round Rest" ? currentSegment.round + 1 : currentSegment.round} of {rounds}</div>
-                {currentSegment.phase === "Work" && (
-                  <div className="text-lg text-center text-gray-600">Exercise {currentSegment.exercise} of {exercises}</div>
-                )}
-                {nextSegment && (
-                  <div className="text-sm text-center text-gray-500 mt-2">Next: {nextSegment.phase}</div>
-                )}
-              </div>
-              <div className="text-6xl font-bold text-center mb-6">{currentSegmentRemaining}s</div>
-              <div className="w-full bg-gray-200 h-4 rounded-full mb-2 overflow-hidden flex">
-                {Array.from({ length: rounds }, (_, i) => {
-                  let fill = 0;
-                  if (i + 1 < activeMainRound) {
-                    fill = 100;
-                  } else if (i + 1 === activeMainRound) {
-                    fill = mainProgressPercent;
-                  }
-                  return (
-                    <div key={i} className="relative" style={{ width: `${100/rounds}%` }}>
-                      <div className={`${colors[i % colors.length]} h-full`} style={{ width: `${fill}%`, transition: "width 0.5s" }}></div>
-                    </div>
-                  );
-                })}
-              </div>
-              <div className="w-full bg-gray-200 h-2 rounded-full mb-4 overflow-hidden">
-                <div className="bg-gray-600 h-full" style={{ width: `${thinProgressPercent}%`, transition: "width 0.5s" }}></div>
-              </div>
-              <div className="text-center mb-6 text-gray-600">
-                Total time left: {formatTime(totalTimeLeft)}
-              </div>
-              <div className="flex gap-4">
-                <button onClick={togglePause} className={`flex-1 p-3 rounded text-white transition ${isRunning ? 'bg-yellow-500 hover:bg-yellow-600' : 'bg-green-500 hover:bg-green-600'}`}>
-                  {isRunning ? "Pause" : "Resume"}
-                </button>
-                <button onClick={resetWorkout} className="flex-1 bg-red-500 text-white p-3 rounded hover:bg-red-600 transition">
-                  Reset
-                </button>
-              </div>
-              {(!isRunning && currentSegmentIndex === schedule.length - 1 && currentSegmentRemaining === 0) && (
-                <div className="text-2xl font-bold text-green-500 text-center mt-6">Workout Complete!</div>
-              )}
-            </div>
-          </div>
-        );
-      }
-      return null;
-    }
-    const root = ReactDOM.createRoot(document.getElementById('root'));
-    root.render(<TabataTimer />);
-  </script>
+
+    </script>
 </body>
 </html>
